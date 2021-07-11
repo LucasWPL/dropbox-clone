@@ -37,10 +37,10 @@ class DropBoxController{
                 responses.forEach((resp) => {
                     this.getFirebaseRef().push().set(resp.files['input-file']);
                 });
-                uploadComplete();
+                this.uploadComplete();
             }).catch((err)=>{
                 console.log(err);
-                uploadComplete();
+                this.uploadComplete();
             });
             this.modalShow();
         });
