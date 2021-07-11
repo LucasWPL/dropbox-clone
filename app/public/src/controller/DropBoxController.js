@@ -6,8 +6,24 @@ class DropBoxController{
         this.progressBarEl = this.snackModalEl.querySelector('.mc-progress-bar-fg');
         this.namefileEl = this.snackModalEl.querySelector('.filename');
         this.timeleftEl = this.snackModalEl.querySelector('.timeleft');
-
+        
+        this.connectFirebase();
         this.initEvents();
+    }
+
+    connectFirebase(){
+        var firebaseConfig = {
+            apiKey: "AIzaSyB26tOdPoyJPVcd_13aAy-osz9n8fVSWdA",
+            authDomain: "dropbox-clone-d2573.firebaseapp.com",
+            databaseURL: "https://dropbox-clone-d2573-default-rtdb.firebaseio.com",
+            projectId: "dropbox-clone-d2573",
+            storageBucket: "dropbox-clone-d2573.appspot.com",
+            messagingSenderId: "744768619675",
+            appId: "1:744768619675:web:06354b50bf850b4ca8b23e",
+            measurementId: "G-KVV8QWVDNQ"
+        };
+        firebase.initializeApp(firebaseConfig);
+        firebase.analytics();
     }
 
     initEvents(){
@@ -16,10 +32,22 @@ class DropBoxController{
         });
 
         this.inputFilesEl.addEventListener('change', (event) => {
-            this.uploadTask(event.target.files);
+            this.btnSendFileEl.disabled = true;
+            this.uploadTask(event.target.files).then((responses) => {
+                responses.forEach((resp) => {
+                    this.getFirebaseRef().push().set(resp.files['input-file']);
+                });
+                uploadComplete();
+            }).catch((err)=>{
+                console.log(err);
+                uploadComplete();
+            });
             this.modalShow();
-            this.inputFilesEl.value = '';
         });
+    }
+
+    getFirebaseRef(){
+        return firebase.database().ref('files');
     }
 
     modalShow(show = true){
@@ -36,7 +64,6 @@ class DropBoxController{
                 ajax.open('POST', '/upload');
                 
                 ajax.onload = (event) => {
-                    this.modalShow(false);
                     try {
                         resolve(JSON.parse(ajax.responseText));
                     } catch (e){
@@ -45,7 +72,6 @@ class DropBoxController{
                 };
                 
                 ajax.onerror = (event) =>{
-                    this.modalShow(false);
                     reject(event);
                 }
                 
@@ -64,6 +90,12 @@ class DropBoxController{
         });
 
         return Promise.all(promises);
+    }
+
+    uploadComplete(){
+        this.modalShow(false);
+        this.inputFilesEl.value = '';
+        this.btnSendFileEl.disabled = false;
     }
 
     uploadProgress(event, file){
